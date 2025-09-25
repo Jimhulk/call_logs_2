@@ -418,7 +418,9 @@ $(function(){
 				$("#client_or_lead").val("client");
 				$("#contactId").val(contacts[0].id);
 				$("#lm_meta_box").hide();
-			} else if (leads.length > 0 && contacts.length === 0) {
+				showCallModal(data);
+				modalOpen = true;
+			} /*else if (leads.length > 0 && contacts.length === 0) {
 				$("#callDetailsModalLabel").html(leads[0].name);
 				$("#tab-main-tab").html("Δυνητικός Πελάτης");
 				$("#mainSelectLabel").html("Δυνητικός Πελάτης");
@@ -432,14 +434,14 @@ $(function(){
 				$("#mainSelect").val(leads[0].id).trigger("change");
 				$("#client_or_lead").val("lead");
 				$("#lm_meta_box").show();
-			} else{
+			}*/ else{
 				$.post("'. admin_url('call_logs/add_call_notification') .'", { data: data }, function(res) {
 				}, "json").fail(function(){
 				});
 				return;
 			}
-			showCallModal(data);
-			modalOpen = true;
+			//showCallModal(data);
+			//modalOpen = true;
 		}, "json").fail(function(){	//ERROROROROR
 			$.post("'. admin_url('call_logs/add_call_notification') .'", { data: data }, function(res) {
 			}, "json").fail(function(){
@@ -455,7 +457,19 @@ $(function(){
 			return;
 		}*/
 
-		runQueue(data);
+		$.post("'. admin_url('call_logs/get_phone_matches') .'", { phone: data.phone }, function(res) {
+			var contacts = res.contacts || [];
+			var leads = res.leads || [];
+			var clientsFound  = res.clients_found || [];
+			if (leads.length > 0 && contacts.length === 0) {
+				return;
+			}else{
+				runQueue(data);
+			}
+		}, "json").fail(function(){
+			
+		});
+		// runQueue(data);
 	});
 	channel.bind("pusher:subscription_succeeded", function() {
 		console.log("✅ Subscribed to", channel.name);
@@ -575,6 +589,58 @@ $(function(){
 			}
 		}
 	});
+	
+	// new livecall channel
+	var liveChannel = pusher.subscribe("livecall-channel-" + staff_ext);
+
+	liveChannel.bind("livecall-event", function(data) {
+		runLiveCall(data);
+	});
+
+	liveChannel.bind("pusher:subscription_succeeded", function() {
+		console.log("✅ Subscribed to", liveChannel.name);
+	});
+	liveChannel.bind("pusher:subscription_error", (error) => {
+		console.error("❌ Subscription failed:", error);
+	});
+	
+	function runLiveCall(data){
+		$.post("'. admin_url('call_logs/get_phone_matches') .'", { phone: data.external }, function(res) {
+			var contacts = res.contacts || [];
+			var leads = res.leads || [];
+			var clientsFound  = res.clients_found || [];
+			
+			$("#mainSelect").empty().append(\'<option value="0" selected>---</option>\');
+			
+			if (leads.length > 0 && contacts.length === 0) {
+				$("#callDetailsModalLabel").html(leads[0].name);
+				$("#tab-main-tab").html("Δυνητικός Πελάτης");
+				$("#mainSelectLabel").html("Δυνητικός Πελάτης");
+				leads.forEach(function(c) {
+				  $("#mainSelect").append(
+					$("<option>")
+					  .val(c.id)
+					  .text(c.name)
+				  );
+				});
+				$("#mainSelect").val(leads[0].id).trigger("change");
+				$("#client_or_lead").val("lead");
+				$("#lm_meta_box").show();
+				
+				data.call_time = "-";
+				data.talking = "--";
+				data.phone = data.external;
+				data.ids = [0];
+				
+				showCallModal(data);
+				modalOpen = true;
+			}
+			
+			
+		}, "json").fail(function(){
+			console.log("Failed");
+		});
+	}
 
 });
     </script>';
