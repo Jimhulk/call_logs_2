@@ -378,7 +378,8 @@ $(function(){
 		$("#callDetailsCallPhone").html(data.phone);
 		$("#callDetailsIds").val(JSON.stringify(data.ids));
 		
-		$("#callDetailsModal").modal("show");
+		//$("#callDetailsModal").modal("show");
+		$("#callDetailsModal").modal({ backdrop: false, show: true });
 		modalOpen = true;
 		console.log("Open modal");
 	}
@@ -420,6 +421,7 @@ $(function(){
 				$("#lm_meta_box").hide();
 				showCallModal(data);
 				modalOpen = true;
+				document.getElementById("right-sidebar-toggle").click();
 			} /*else if (leads.length > 0 && contacts.length === 0) {
 				$("#callDetailsModalLabel").html(leads[0].name);
 				$("#tab-main-tab").html("Δυνητικός Πελάτης");
@@ -525,9 +527,11 @@ $(function(){
             dataType: "json"
         }).done(function(res){
             if (res.success) {
-				disableUnsavedPrompt();
+			  disableUnsavedPrompt();
               $modal.modal("hide");
               modalOpen = false;
+			  
+			  $("#callDetailsModalLabel").text("No call");
 			  
 			  var responseUrl = res.response_code;
               
@@ -610,7 +614,7 @@ $(function(){
 			var leads = res.leads || [];
 			var clientsFound  = res.clients_found || [];
 			
-			$("#mainSelect").empty().append(\'<option value="0" selected>---</option>\');
+			// $("#mainSelect").empty().append(\'<option value="0" selected>---</option>\');
 			
 			if (leads.length > 0 && contacts.length === 0) {
 				$("#callDetailsModalLabel").html(leads[0].name);
@@ -634,6 +638,7 @@ $(function(){
 				
 				showCallModal(data);
 				modalOpen = true;
+				document.getElementById("right-sidebar-toggle").click();
 			}
 			
 			
@@ -645,7 +650,13 @@ $(function(){
 });
     </script>';
 
-    $modal_path = APPPATH . '../modules/call_logs/views/call_details_modal.php';
+    /*$modal_path = APPPATH . '../modules/call_logs/views/call_details_modal.php';
+    if (is_file($modal_path)) {
+        // load->file() will execute the PHP and return its output
+        echo $CI->load->file($modal_path, true);
+    }*/
+	
+	$modal_path = APPPATH . '../modules/call_logs/views/call_details_sidebar.php';
     if (is_file($modal_path)) {
         // load->file() will execute the PHP and return its output
         echo $CI->load->file($modal_path, true);
