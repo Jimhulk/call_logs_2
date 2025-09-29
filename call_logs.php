@@ -356,6 +356,7 @@ $(function(){
 			console.log("Broadcast close");
 			skipBroadcast = true;
 			$("#callDetailsModal").modal("hide");
+			$("#callDetailsModalLabel").text("No call");
 			modalOpen = false;
 			$("#callDetailsModal").one("hidden.bs.modal", function(){
 				skipBroadcast = false;
@@ -386,7 +387,6 @@ $(function(){
 	
 	function runQueue(data){
 		if(modalOpen){
-			console.log("Event queued by function");
 			queue.push(data);
 			return;
 		}
@@ -421,8 +421,12 @@ $(function(){
 				$("#lm_meta_box").hide();
 				showCallModal(data);
 				modalOpen = true;
-				document.getElementById("right-sidebar-toggle").click();
-			} /*else if (leads.length > 0 && contacts.length === 0) {
+				//document.getElementById("right-sidebar-toggle").click();
+				var sb = document.getElementById("right-sidebar");
+				if (sb && !sb.classList.contains("open")) {
+				  document.getElementById("right-sidebar-toggle").click();
+				}
+			} else if (leads.length > 0 && contacts.length === 0 && data.from == "From queue") {
 				$("#callDetailsModalLabel").html(leads[0].name);
 				$("#tab-main-tab").html("Δυνητικός Πελάτης");
 				$("#mainSelectLabel").html("Δυνητικός Πελάτης");
@@ -436,7 +440,9 @@ $(function(){
 				$("#mainSelect").val(leads[0].id).trigger("change");
 				$("#client_or_lead").val("lead");
 				$("#lm_meta_box").show();
-			}*/ else{
+				showCallModal(data);
+				modalOpen = true;
+			} else{
 				$.post("'. admin_url('call_logs/add_call_notification') .'", { data: data }, function(res) {
 				}, "json").fail(function(){
 				});
@@ -464,6 +470,14 @@ $(function(){
 			var leads = res.leads || [];
 			var clientsFound  = res.clients_found || [];
 			if (leads.length > 0 && contacts.length === 0) {
+				let lead_url = "'. admin_url("call_logs/save_call_to_lead") .'";
+				
+				$.post("'. admin_url("call_logs/save_call_to_lead") .'", { lead_id: leads[0].id, call_ids: data.ids }, function(resultat) {
+
+				}, "json").fail(function(){
+					console.log("Couldnt save cdr log to lead");
+				});
+				
 				return;
 			}else{
 				runQueue(data);
@@ -535,7 +549,7 @@ $(function(){
 			  
 			  var responseUrl = res.response_code;
               
-			  $modal.one(\'hidden.bs.modal\', function() {
+			  //$modal.one(\'hidden.bs.modal\', function() {
 				  if (responseUrl && responseUrl !== "0" && responseUrl !== 0) {
 						var urlToOpen = responseUrl;
 						if (urlToOpen.indexOf("http") !== 0) {
@@ -548,8 +562,10 @@ $(function(){
 						var newWin = window.open(urlToOpen, "_blank");
 				  }
 				  
+
 				  if(queue.length > 0){
 					let dataItemQueue = queue.shift();
+					dataItemQueue.from = "From queue";
 					runQueue(dataItemQueue);
 					console.log("Call to Broadcast EDIT");
 					bc.postMessage("edit_call_modal");
@@ -557,7 +573,7 @@ $(function(){
 					console.log("Call to Broadcast CLOSE");
 					bc.postMessage("close_call_modal");
 				  }
-			  });
+			  //});
           } else {
             alert("Error saving call log");
           }
@@ -617,6 +633,16 @@ $(function(){
 			// $("#mainSelect").empty().append(\'<option value="0" selected>---</option>\');
 			
 			if (leads.length > 0 && contacts.length === 0) {
+				if(modalOpen){
+					data.call_time = getCurrentDateTime();
+					data.talking = "--";
+					data.phone = data.external;
+					data.ids = [0];
+					data.from = "From queue";
+					queue.push(data);
+					return;
+				}
+				
 				$("#callDetailsModalLabel").html(leads[0].name);
 				$("#tab-main-tab").html("Δυνητικός Πελάτης");
 				$("#mainSelectLabel").html("Δυνητικός Πελάτης");
@@ -631,20 +657,42 @@ $(function(){
 				$("#client_or_lead").val("lead");
 				$("#lm_meta_box").show();
 				
-				data.call_time = "-";
+				data.call_time = getCurrentDateTime();
 				data.talking = "--";
 				data.phone = data.external;
 				data.ids = [0];
 				
 				showCallModal(data);
 				modalOpen = true;
-				document.getElementById("right-sidebar-toggle").click();
+				//document.getElementById("right-sidebar-toggle").click();
+				var sb = document.getElementById("right-sidebar");
+				if (sb && !sb.classList.contains("open")) {
+				  document.getElementById("right-sidebar-toggle").click();
+				}
 			}
 			
 			
 		}, "json").fail(function(){
 			console.log("Failed");
 		});
+	}
+	
+	function getCurrentDateTime() {
+	  let now = new Date();
+
+	  let dd = String(now.getDate()).padStart(2, "0");
+	  let monthNames = [
+		"January","February","March","April","May","June",
+		"July","August","September","October","November","December"
+	  ];
+	  let monthName = monthNames[now.getMonth()]; // 0-based
+	  let yyyy = now.getFullYear();
+
+	  let hh = String(now.getHours()).padStart(2, "0");
+	  let ii = String(now.getMinutes()).padStart(2, "0");
+	  let ss = String(now.getSeconds()).padStart(2, "0");
+
+	  return `${dd} ${monthName} ${yyyy} ${hh}:${ii}:${ss}`;
 	}
 
 });

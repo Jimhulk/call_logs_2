@@ -161,8 +161,8 @@ if (isset($customFields->options) && $customFields->options !== '') {
 				<input type="hidden" id="contactId" name="contactId" value="" />
 
 				<div class="modal-body">
-				  <p hidden><strong>Ημερομηνία:</strong> <span id="callDetailsCallTime"></span></p>
-				  <p hidden><strong>Διάρκεια:</strong> <span id="callDetailsCallTalking"></span></p>
+				  <p><strong>Ημερομηνία:</strong> <span id="callDetailsCallTime"></span></p>
+				  <p><strong>Διάρκεια:</strong> <span id="callDetailsCallTalking"></span></p>
 				  <p><strong>Τηλέφωνο:</strong> <span id="callDetailsCallPhone"></span></p>
 
 				  <ul hidden class="nav nav-tabs" role="tablist">

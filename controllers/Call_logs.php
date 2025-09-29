@@ -1185,7 +1185,8 @@ class Call_logs extends AdminController
 		echo json_encode([
 			'contacts'      => $contacts,
 			'leads'         => $leads,
-			'clients_found' => $clients_found
+			'clients_found' => $clients_found,
+			'csrf_hash' => $this->security->get_csrf_hash()
 		]);
 	}
 	
@@ -1226,5 +1227,38 @@ class Call_logs extends AdminController
 		$id = $this->db->insert_id();
 		pusher_trigger_notification([$userid]);
 		//return $id;
+	}
+	
+	public function save_call_to_lead(){
+		$lead_id = $this->input->post('lead_id');
+		
+		$call_ids = $this->input->post('call_ids');
+		
+		$data['client_id'] = null;
+		$data['lead_id']   = $lead_id;
+		
+		$this->db->where_in('id', $call_ids)
+					->update('tblcall_logs', $data);
+					
+		echo json_encode([
+			'success' => true,
+		]);
+	}
+	
+	public function show_dashboard(){
+		$all_leads = $this->db
+					->select('*')
+					->from('tblleads')
+					->get()
+					->result_array();
+		
+		$data = [];
+		
+		$data['title'] = "Πίνακας ελέγχου";
+		$staff_id = $this->session->userdata('staff_user_id');
+		$data['staff'] = $this->staff_model->get($staff_id);
+		$data['all_leads'] = $all_leads;
+		
+		$this->load->view('dashboard', $data);
 	}
 }
