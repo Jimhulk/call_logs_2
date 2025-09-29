@@ -6,29 +6,25 @@
 }*/
 ?>
 <?php init_head(); ?>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
+<div id="wrapper">
+	<div class="content">
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+		<div class="row">
+			<div class="col-md-12">
+				<h4 class="tw-mb-2">DASHBOARDDASHBOARD</h4>
+			</div>
+		</div>
+		
+	</div>
+</div>
 
 <link
   href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
   rel="stylesheet"
 />
 <?php init_tail(); ?>
-
-
 
 <?php
   $leads_from_remarks = json_encode($leads_from_remarks, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP);
