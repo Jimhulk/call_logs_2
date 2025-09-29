@@ -100,6 +100,51 @@
   margin-right: 420px !important; /* keep in sync with .right-sidebar width */
 }
 
+:root {
+  --right-sidebar-open-width: 420px; /* keep in sync with your panel width */
+  --toggle-offset: 12px;             /* distance from viewport right edge */
+}
+
+/* Make the toggle fixed to viewport (not positioned inside aside) */
+.right-sidebar-toggle {
+  position: fixed !important;            /* fixed to viewport */
+  right: var(--toggle-offset) !important;/* small gap from right edge when closed */
+  top: 62% !important;                   /* a bit lower on the screen */
+  transform: translateY(-50%) !important;
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1065 !important;              /* above the panel (panel is 1050) */
+  transition: right .24s ease, transform .24s ease, background .12s;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  border-radius: 8px;
+  pointer-events: auto;
+  /* remove old "left" rule effect */
+  left: auto !important;
+}
+
+/* When the sidebar opens, move the toggle left so it sits just outside the panel */
+.right-sidebar.open .right-sidebar-toggle {
+  right: calc(var(--right-sidebar-open-width) + var(--toggle-offset)) !important;
+  /* tiny shift to look flush */
+  transform: translateY(-50%) translateX(-2px) !important;
+}
+
+/* Small-screen behavior: keep toggle at right edge and not shift (panel overlays) */
+@media (max-width: 991px) {
+  .right-sidebar-toggle {
+    right: var(--toggle-offset) !important;
+    top: 70% !important;
+  }
+  .right-sidebar.open .right-sidebar-toggle {
+    right: var(--toggle-offset) !important;
+    transform: translateY(-50%) !important;
+  }
+}
+
 </style>
 
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
