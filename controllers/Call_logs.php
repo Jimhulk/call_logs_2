@@ -1251,6 +1251,28 @@ class Call_logs extends AdminController
 					->from('tblleads')
 					->get()
 					->result_array();
+					
+		$subquery = $this->db
+			->select('MAX(id) as latest_id')
+			->from('tbllead_manager_meeting_remark')
+			->where('lm_follow_up_date >', date('Y-m-d H:i:s'))
+			->group_by('rel_id')
+			->get_compiled_select();
+
+		$future_remarks = $this->db
+			->select('*')
+			->from('tbllead_manager_meeting_remark')
+			->where("id IN ($subquery)", NULL, FALSE)
+			->get()
+			->result_array();
+		$rel_ids = array_column($future_remarks, 'rel_id');
+			
+		$leads_from_remarks = $this->db
+			->select('*')
+			->from('tblleads')
+			->where_in('id', $rel_ids)
+			->get()
+			->result_array();
 		
 		$data = [];
 		
@@ -1258,6 +1280,8 @@ class Call_logs extends AdminController
 		$staff_id = $this->session->userdata('staff_user_id');
 		$data['staff'] = $this->staff_model->get($staff_id);
 		$data['all_leads'] = $all_leads;
+		$data['leads_from_remarks'] = $leads_from_remarks;
+		$data['future_remarks'] = $future_remarks;
 		
 		$this->load->view('dashboard', $data);
 	}

@@ -31,15 +31,18 @@
 
 
 <?php
-  $all_leads = json_encode($all_leads, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP);
+  $leads_from_remarks = json_encode($leads_from_remarks, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP);
+  $future_remarks = json_encode($future_remarks, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP);
 ?>
 <script>
 	$(window).on('load', function(){
 		$('#side-menu').empty();
 		
+		console.log(<?php echo $future_remarks; ?>);
+		
 		let href = "";
 		
-		let all_leads = <?php echo $all_leads; ?>;
+		let leads_from_remarks = <?php echo $leads_from_remarks; ?>;
 		
 		let customHtml = '<li class="tw-mt-[63px] sm:tw-mt-0 -tw-mx-2 tw-overflow-hidden sm:tw-bg-neutral-900/50">\
             <div id="logo" class="tw-py-2 tw-px-2 tw-h-[63px] tw-flex tw-items-center">\
@@ -55,7 +58,7 @@
 		//customHtml += '<ul class="nav metis-menu tw-mt-[15px] tw-max-h-[400px] tw-overflow-y-auto">';
 		customHtml += '<ul class="nav metis-menu tw-mt-[15px]" style="max-height:600px; overflow-y:auto;">';
   
-		all_leads.forEach((element) => {
+		leads_from_remarks.forEach((element) => {
 			href = "<?php echo admin_url('leads/index/') ?>"+element.id;
 			customHtml += `<li><a href=${href} target="_blank">${element.name}</a></li>`;
 		});
