@@ -7,8 +7,6 @@
 ?>
 <?php init_head(); ?>
 
-<?php $CI = &get_instance(); ?>
-
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <div id="wrapper">
@@ -16,34 +14,101 @@
 		
 		<div class="row">
 		  <div class="col-md-12">
-			<h5 class="tw-mb-3 tw-text-lg tw-font-semibold">Remarks της ημέρας <a href="#" id="call_button" class="btn btn-primary">Τηλεφωνική Επικοινωνία</a></h5>
+			<h5 class="tw-mb-3 tw-text-lg tw-font-semibold">Remarks της ημέρας <a href="#" id="call_button" class="btn btn-primary">Τηλεφωνική Επικοινωνία</a>
+			</h5>
 
-			<div id="scroll-table-wrap" class="tw-w-full tw-max-w-xl" style="height:320px; overflow:auto; border:1px solid rgba(0,0,0,0.08); border-radius:6px; background:#fff;">
-			  <table class="tw-min-w-full">
-				<thead class="tw-sticky tw-top-0" style="background:#f8fafc; z-index:10;">
-				  <tr>
-					<th class="tw-px-4 tw-py-2 tw-text-left tw-text-sm tw-font-medium">Όνομα</th>
-					<th class="tw-px-4 tw-py-2 tw-text-left tw-text-sm tw-font-medium">Ημερομηνία</th>
-					<th class="tw-px-4 tw-py-2 tw-text-left tw-text-sm tw-font-medium">Κάτι εξτρα</th>
-				  </tr>
-				</thead>
-				<tbody>
-				  <!-- many rows to force overflow -->
-				  <tr>
-					<td class="tw-px-4 tw-py-2">Alice Johnson</td><td class="tw-px-4 tw-py-2">alice@example.com</td>
-					<td class="tw-px-4 tw-py-2">Note A</td>
-				  </tr>
-				  <?php
-					foreach($future_remarks as $rem){
-						$lead_rem = $CI->db->select('*')->from('tblleads')->where('id', $rem['rel_id'])->get()->row_array(); 
-						echo '<tr>
-							<td class="tw-px-4 tw-py-2">'. $lead_rem['name'] .'</td>
-							<td class="tw-px-4 tw-py-2">'. $rem['lm_follow_up_date'] .'</td>
-							<td class="tw-px-4 tw-py-2">'. $rem['remark'] .'</td>';
-					}
-				  ?>
-				</tbody>
-			  </table>
+			<div class="row">
+			  <!-- LEFT: table -->
+			  <div class="col-md-6">
+				<div id="scroll-table-wrap" class="tw-w-full" style="height:520px; overflow:auto; border:1px solid rgba(0,0,0,0.08); border-radius:6px; background:#fff;">
+				  <table class="tw-min-w-full">
+					<thead class="tw-sticky tw-top-0" style="background:#f8fafc; z-index:10;">
+					  <tr>
+						<th class="tw-px-4 tw-py-2 tw-text-left tw-text-sm tw-font-medium">Όνομα</th>
+						<th class="tw-px-4 tw-py-2 tw-text-left tw-text-sm tw-font-medium">Ημερομηνία</th>
+						<th class="tw-px-4 tw-py-2 tw-text-left tw-text-sm tw-font-medium">Κάτι εξτρα</th>
+					  </tr>
+					</thead>
+					<tbody>
+					  <!-- static example row -->
+					  <tr>
+						<td class="tw-px-4 tw-py-2">Alice Johnson</td>
+						<td class="tw-px-4 tw-py-2">2025-09-29 11:52</td>
+						<td class="tw-px-4 tw-py-2">Placeholder</td>
+					  </tr>
+
+					  <?php
+					  $CI = &get_instance();
+					  foreach ($future_remarks as $rem) {
+						  $lead_rem = $CI->db->select('*')->from('tblleads')->where('id', $rem['rel_id'])->get()->row_array();
+
+						  $lead_id    = $lead_rem ? $lead_rem['id'] : 0;
+						  $lead_name  = $lead_rem ? html_escape($lead_rem['name']) : '—';
+						  $lead_email = $lead_rem && isset($lead_rem['email']) ? html_escape($lead_rem['email']) : '';
+						  $lead_phone = $lead_rem && isset($lead_rem['phonenumber']) ? html_escape($lead_rem['phonenumber']) : '';
+						  $follow_up  = !empty($rem['lm_follow_up_date']) ? html_escape($rem['lm_follow_up_date']) : '—';
+						  $remark     = !empty($rem['remark']) ? html_escape($rem['remark']) : '—';
+						  $lead_url   = admin_url('leads/index/' . $lead_id);
+
+						  echo '<tr class="lead-row">';
+						  echo '<td class="tw-px-4 tw-py-2">';
+						  echo '<a href="#" class="lead-link"'
+							  . ' data-id="'. $lead_id .'"'
+							  . ' data-name="'. $lead_name .'"'
+							  . ' data-email="'. $lead_email .'"'
+							  . ' data-phone="'. $lead_phone .'"'
+							  . ' data-followup="'. $follow_up .'"'
+							  . ' data-remark="'. $remark .'"'
+							  . ' data-href="'. $lead_url .'"'
+							  . '>'
+							  . $lead_name
+							  . '</a>';
+						  echo '</td>';
+						  echo '<td class="tw-px-4 tw-py-2">'. $follow_up .'</td>';
+						  echo '<td class="tw-px-4 tw-py-2">'. $remark .'</td>';
+						  echo '</tr>';
+					  }
+					  ?>
+					</tbody>
+				  </table>
+				</div>
+			  </div>
+
+			  <!-- RIGHT: lead card -->
+			  <div class="col-md-6">
+				<div id="lead-card" class="tw-w-full" style="height:520px; overflow:auto;">
+				  <div class="tw-bg-white tw-rounded-lg tw-shadow-sm tw-border tw-border-gray-100 tw-p-4">
+					<div id="lead-card-empty" class="tw-text-center tw-text-gray-500">
+					  <p class="tw-mb-2">Επίλεξε ένα lead για λεπτομέρειες</p>
+					  <p class="tw-text-sm">Κάνε κλικ στο όνομα αριστερά</p>
+					</div>
+
+					<div id="lead-card-content" style="display:none;">
+					  <div class="tw-flex tw-justify-between tw-items-start">
+						<h3 id="card-name" class="tw-text-xl tw-font-semibold tw-mb-1">Name Placeholder</h3>
+						<div>
+						  <a id="card-open-link" href="#" target="_blank" class="btn btn-sm btn-outline-primary">Άνοιγμα</a>
+						</div>
+					  </div>
+
+					  <div class="tw-mt-3 tw-space-y-2">
+						<div><span class="tw-font-medium tw-text-gray-700">Email:</span> <span id="card-email" class="tw-text-gray-600">email@...</span></div>
+						<div><span class="tw-font-medium tw-text-gray-700">Phone:</span> <span id="card-phone" class="tw-text-gray-600">+30 ...</span></div>
+						<div><span class="tw-font-medium tw-text-gray-700">Follow-up:</span> <span id="card-followup" class="tw-text-gray-600">—</span></div>
+						<div><span class="tw-font-medium tw-text-gray-700">Remark:</span></div>
+						<div id="card-remark" class="tw-text-gray-700 tw-py-2 tw-bg-gray-50 tw-rounded-sm">—</div>
+					  </div>
+
+					  <div class="tw-mt-4 tw-flex">
+						<button id="card-call" type="button" class="btn btn-success btn-sm tw-mr-2">Call</button>
+						<button id="card-edit" type="button" class="btn btn-secondary btn-sm tw-mr-2">Edit</button>
+						<button id="card-notes" type="button" class="btn btn-light btn-sm">Notes</button>
+					  </div>
+					</div>
+
+				  </div>
+				</div>
+			  </div>
 			</div>
 
 		  </div>
@@ -64,41 +129,51 @@
 ?>
 <script>
 	$(window).on('load', function(){
-		$('#side-menu').empty();
-		
-		console.log(<?php echo $future_remarks; ?>);
-		
-		let href = "";
-		
-		let leads_from_remarks = <?php echo $leads_from_remarks; ?>;
-		
-		let customHtml = '<li class="tw-mt-[63px] sm:tw-mt-0 -tw-mx-2 tw-overflow-hidden sm:tw-bg-neutral-900/50">\
-            <div id="logo" class="tw-py-2 tw-px-2 tw-h-[63px] tw-flex tw-items-center">\
-                <a href="https://hub2.mece.gr/admin/" class="logo img-responsive !tw-mt-0">\
-        <img src="https://hub2.mece.gr/uploads/company/d7a25926d413ebc2e27e0906120b60f2.png" class="img-responsive" alt="Mece - Πρότυπα Κέντρα Διαμεσολάβησης">\
-        </a>            </div>\
-        </li>';
-		
-		customHtml += '<h4 class="tw-px-3">Δυνητικοί Πελάτες</h4>';
-		
-		customHtml += '<a href="#" id="telecomButton" class="btn btn-primary tw-mb-8 tw-ml-2 mright5 display-block">Τηλεφωνική Επικοινωνία</a>';
-		
-		//customHtml += '<ul class="nav metis-menu tw-mt-[15px] tw-max-h-[400px] tw-overflow-y-auto">';
-		customHtml += '<ul class="nav metis-menu tw-mt-[15px]" style="max-height:600px; overflow-y:auto;">';
-  
-		leads_from_remarks.forEach((element) => {
-			href = "<?php echo admin_url('leads/index/') ?>"+element.id;
-			customHtml += `<li><a href=${href} target="_blank">${element.name}</a></li>`;
-		});
-
-		customHtml += '</ul>';
-
-		$('#side-menu').html(customHtml);
-		
 		$('#menu').remove();
 		$('.hide-menu').first().remove();
 		$('body').removeClass('show-sidebar').addClass('hide-sidebar');
 
 
 	});
+</script>
+
+<script>
+jQuery(function($){
+	
+  $('#scroll-table-wrap').on('click', '.lead-link', function(e){
+	  
+    // if user ctrl/cmd or middle-click, open actual lead page in new tab
+    var openInNewTab = e.ctrlKey || e.metaKey || e.which === 2;
+    var href = $(this).data('href') || '#';
+    if (openInNewTab) {
+      window.open(href, '_blank', 'noopener');
+      return;
+    }
+
+    e.preventDefault();
+
+    $('.lead-row').removeClass('tw-bg-blue-50 tw-bg-opacity-30');
+    $(this).closest('tr').addClass('tw-bg-blue-50 tw-bg-opacity-30');
+
+    // populate card from data-attrs
+    var id = $(this).data('id');
+    var name = $(this).data('name') || '—';
+    var email = $(this).data('email') || '—';
+    var phone = $(this).data('phone') || '—';
+    var followup = $(this).data('followup') || '—';
+    var remark = $(this).data('remark') || '—';
+
+    $('#lead-card-empty').hide();
+    $('#lead-card-content').show();
+
+    $('#card-name').text(name);
+    $('#card-email').text(email);
+    $('#card-phone').text(phone);
+    $('#card-followup').text(followup);
+    $('#card-remark').text(remark);
+    $('#card-open-link').attr('href', href);
+
+  });
+});
+
 </script>

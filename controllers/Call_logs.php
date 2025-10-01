@@ -1263,6 +1263,7 @@ class Call_logs extends AdminController
 			->select('*')
 			->from('tbllead_manager_meeting_remark')
 			->where("id IN ($subquery)", NULL, FALSE)
+			->order_by('lm_follow_up_date', 'ASC') // or 'DESC' for newest first
 			->get()
 			->result_array();
 		$rel_ids = array_column($future_remarks, 'rel_id');
