@@ -1286,4 +1286,21 @@ class Call_logs extends AdminController
 		
 		$this->load->view('dashboard', $data);
 	}
+	
+	public function get_notes_for_lead(){
+		$lead_id = $this->input->post('lead_id');
+		
+		$all_notes = $this->db
+			->select('*')
+			->from('tblnotes')
+			->where('rel_type', 'lead')
+			->where('rel_id', $lead_id)
+			->get()
+			->result_array();
+			
+		echo json_encode([
+			'success' => true,
+			'all_notes'=> $all_notes
+		]);
+	}
 }

@@ -102,7 +102,24 @@
 					  <div class="tw-mt-4 tw-flex">
 						<button id="card-call" type="button" class="btn btn-success btn-sm tw-mr-2">Call</button>
 						<button id="card-edit" type="button" class="btn btn-secondary btn-sm tw-mr-2">Edit</button>
-						<button id="card-notes" type="button" class="btn btn-light btn-sm">Notes</button>
+						<button id="card-notes" type="button" class="btn btn-light btn-sm" onclick="showNotes(this)" data-lead="">Notes</button>
+					  </div>
+					</div>
+					
+					<div class="tw-mt-4">
+					  <div id="card-notes-area" style="display:none;">
+						<div id="card-notes-list">
+						
+						  <!-- notes will be injected here -->
+							  <!--div class="tw-border tw-border-gray-100 tw-rounded-sm tw-p-3 tw-mb-2">
+								<div class="tw-flex tw-justify-between tw-items-start tw-mb-1">
+								  <div class="tw-text-sm tw-font-medium tw-text-gray-800">author</div>
+								  <div class="tw-text-xs tw-text-gray-500">date</div>
+								</div>
+								<p style="white-space:normal; overflow-wrap:anywhere; word-break:break-word;">DESCRIPTIONdescriptionDESCRIPTIONdescriptionDESCRIPTIONdescriptionDESCRIPTIONdescriptionDESCRIPTIONdescription</p>
+							  </div-->
+						  
+						</div>
 					  </div>
 					</div>
 
@@ -172,8 +189,54 @@ jQuery(function($){
     $('#card-followup').text(followup);
     $('#card-remark').text(remark);
     $('#card-open-link').attr('href', href);
+	
+	$('#card-notes').attr('data-lead', id);
 
   });
+  
 });
+
+function showNotes(e) {
+  if (e && e.preventDefault) e.preventDefault();
+
+  var $btn  = $('#card-notes');
+  var $area = $('#card-notes-area');
+  if (!$area.length || !$btn.length) return;
+
+  if ($area.is(':visible')) {
+    $area.attr('aria-hidden','true').hide();
+    $btn.attr('aria-expanded','false').removeClass('active');
+	return;
+  } else {
+    $area.attr('aria-hidden','false').show();
+    $btn.attr('aria-expanded','true').addClass('active');
+	
+	
+	let leadId = $(e).attr('data-lead');
+	let url = "<?php echo admin_url('call_logs/get_notes_for_lead') ?>";
+	$.post(url, { lead_id: leadId }, function(res) {
+		let all_notes = res.all_notes;
+		let html = '';
+		
+		$('#card-notes-list').empty();
+		
+		let htmlNotes = '';
+		all_notes.forEach(function(row){
+			htmlNotes += '<div class="tw-border tw-border-gray-100 tw-rounded-sm tw-p-3 tw-mb-2">\
+						<div class="tw-flex tw-justify-between tw-items-start tw-mb-1">\
+						  <div class="tw-text-sm tw-font-medium tw-text-gray-800">'+row.rel_id+'</div>\
+						  <div class="tw-text-xs tw-text-gray-500">'+row.dateadded+'</div>\
+						</div>\
+						<p style="white-space:normal; overflow-wrap:anywhere; word-break:break-word;">'+row.description+'</p>\
+					  </div>';
+		});
+		
+		$('#card-notes-list').html(htmlNotes);
+		
+	}, "json").fail(function(){
+		console.log("MPOUTS");
+	});
+  }
+}
 
 </script>
