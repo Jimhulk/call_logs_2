@@ -191,6 +191,15 @@ jQuery(function($){
     $('#card-open-link').attr('href', href);
 	
 	$('#card-notes').attr('data-lead', id);
+	$('#card-notes-list').empty();
+	showNotes($('#card-notes'));
+	let $area = $('#card-notes-area');
+	let $btn  = $('#card-notes');
+	if ($area.is(':visible')) {
+		$area.attr('aria-hidden','true').hide();
+		$btn.attr('aria-expanded','false').removeClass('active');
+		return;
+	}
 
   });
   
@@ -232,6 +241,16 @@ function showNotes(e) {
 		});
 		
 		$('#card-notes-list').html(htmlNotes);
+		
+		if(all_notes.length == 0){
+			$('#card-notes-list').html('<div class="tw-border tw-border-gray-100 tw-rounded-sm tw-p-3 tw-mb-2">\
+						<div class="tw-flex tw-justify-between tw-items-start tw-mb-1">\
+						  <div class="tw-text-sm tw-font-medium tw-text-gray-800"></div>\
+						  <div class="tw-text-xs tw-text-gray-500"></div>\
+						</div>\
+						<p style="white-space:normal; overflow-wrap:anywhere; word-break:break-word;">No notes</p>\
+					  </div>');
+		}
 		
 	}, "json").fail(function(){
 		console.log("MPOUTS");
