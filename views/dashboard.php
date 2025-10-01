@@ -6,16 +6,49 @@
 }*/
 ?>
 <?php init_head(); ?>
+
+<?php $CI = &get_instance(); ?>
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <div id="wrapper">
 	<div class="content">
-
+		
 		<div class="row">
-			<div class="col-md-12">
-				<h4 class="tw-mb-2">DASHBOARDDASHBOARD</h4>
+		  <div class="col-md-12">
+			<h5 class="tw-mb-3 tw-text-lg tw-font-semibold">Remarks της ημέρας <a href="#" id="call_button" class="btn btn-primary">Τηλεφωνική Επικοινωνία</a></h5>
+
+			<div id="scroll-table-wrap" class="tw-w-full tw-max-w-xl" style="height:320px; overflow:auto; border:1px solid rgba(0,0,0,0.08); border-radius:6px; background:#fff;">
+			  <table class="tw-min-w-full">
+				<thead class="tw-sticky tw-top-0" style="background:#f8fafc; z-index:10;">
+				  <tr>
+					<th class="tw-px-4 tw-py-2 tw-text-left tw-text-sm tw-font-medium">Όνομα</th>
+					<th class="tw-px-4 tw-py-2 tw-text-left tw-text-sm tw-font-medium">Ημερομηνία</th>
+					<th class="tw-px-4 tw-py-2 tw-text-left tw-text-sm tw-font-medium">Κάτι εξτρα</th>
+				  </tr>
+				</thead>
+				<tbody>
+				  <!-- many rows to force overflow -->
+				  <tr>
+					<td class="tw-px-4 tw-py-2">Alice Johnson</td><td class="tw-px-4 tw-py-2">alice@example.com</td>
+					<td class="tw-px-4 tw-py-2">Note A</td>
+				  </tr>
+				  <?php
+					foreach($future_remarks as $rem){
+						$lead_rem = $CI->db->select('*')->from('tblleads')->where('id', $rem['rel_id'])->get()->row_array(); 
+						echo '<tr>
+							<td class="tw-px-4 tw-py-2">'. $lead_rem['name'] .'</td>
+							<td class="tw-px-4 tw-py-2">'. $rem['lm_follow_up_date'] .'</td>
+							<td class="tw-px-4 tw-py-2">'. $rem['remark'] .'</td>';
+					}
+				  ?>
+				</tbody>
+			  </table>
 			</div>
+
+		  </div>
 		</div>
+
 		
 	</div>
 </div>
@@ -25,7 +58,6 @@
   rel="stylesheet"
 />
 <?php init_tail(); ?>
-
 <?php
   $leads_from_remarks = json_encode($leads_from_remarks, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP);
   $future_remarks = json_encode($future_remarks, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP);
@@ -62,5 +94,11 @@
 		customHtml += '</ul>';
 
 		$('#side-menu').html(customHtml);
+		
+		$('#menu').remove();
+		$('.hide-menu').first().remove();
+		$('body').removeClass('show-sidebar').addClass('hide-sidebar');
+
+
 	});
 </script>
