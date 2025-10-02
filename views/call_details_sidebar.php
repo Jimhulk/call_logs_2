@@ -103,46 +103,48 @@
 :root {
   --right-sidebar-open-width: 420px; /* keep in sync with your panel width */
   --toggle-offset: 12px;             /* distance from viewport right edge */
+  --header-height: 56px;             /* default fallback, overwritten by JS */
 }
 
-/* Make the toggle fixed to viewport (not positioned inside aside) */
+/* place the aside below the header and shrink height */
+.right-sidebar {
+  top: var(--header-height);
+  height: calc(100vh - var(--header-height));
+}
+
+/* the panel stays at top:0 inside the aside */
+.right-sidebar-panel {
+  top: 0;
+  height: 100%;
+}
+
+/* toggle handle fixed relative to viewport but offset below header */
 .right-sidebar-toggle {
-  position: fixed !important;            /* fixed to viewport */
-  right: var(--toggle-offset) !important;/* small gap from right edge when closed */
-  top: 62% !important;                   /* a bit lower on the screen */
+  position: fixed !important;
+  right: var(--toggle-offset) !important;
+  top: calc(var(--header-height) + 50vh) !important; /* visually centered beneath header */
   transform: translateY(-50%) !important;
-  width: 44px;
-  height: 44px;
-  line-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1065 !important;              /* above the panel (panel is 1050) */
-  transition: right .24s ease, transform .24s ease, background .12s;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-  border-radius: 8px;
-  pointer-events: auto;
-  /* remove old "left" rule effect */
+  z-index: 1065 !important;
   left: auto !important;
 }
 
-/* When the sidebar opens, move the toggle left so it sits just outside the panel */
+/* when open, move the toggle left so it sits outside the panel */
 .right-sidebar.open .right-sidebar-toggle {
   right: calc(var(--right-sidebar-open-width) + var(--toggle-offset)) !important;
-  /* tiny shift to look flush */
   transform: translateY(-50%) translateX(-2px) !important;
 }
 
-/* Small-screen behavior: keep toggle at right edge and not shift (panel overlays) */
+/* Keep the push class but use the variable width */
+.body-right-sidebar-active {
+  transition: margin-right .24s ease;
+  margin-right: var(--right-sidebar-open-width) !important;
+}
+
+/* small-screen: keep existing overlay behaviour */
 @media (max-width: 991px) {
-  .right-sidebar-toggle {
-    right: var(--toggle-offset) !important;
-    top: 70% !important;
-  }
-  .right-sidebar.open .right-sidebar-toggle {
-    right: var(--toggle-offset) !important;
-    transform: translateY(-50%) !important;
-  }
+  .right-sidebar { top: 0; height: 100vh; } /* overlay on mobile */
+  .right-sidebar-toggle { top: calc(var(--header-height) + 60vh) !important; }
+  .right-sidebar.open .right-sidebar-toggle { right: var(--toggle-offset) !important; transform: translateY(-50%) !important; }
 }
 
 </style>
@@ -382,60 +384,112 @@ if (isset($customFields->options) && $customFields->options !== '') {
   var panel = document.getElementById('right-sidebar-panel');
   var toggle = document.getElementById('right-sidebar-toggle');
   var closeBtn = document.getElementById('right-sidebar-close');
-  var body = document.documentElement; // or document.body depending on Perfex layout
 
-  // width used to compute content margin; keep in sync with CSS default width
-  var SIDEBAR_WIDTH = 300;
+  /* ----- header detection & css var ----- */
+  function findHeaderElement() {
+    var selectors = ['header', '#header', '.header', '.topbar', '.main-header', '.app-header', '.navbar', '.top-nav', '.main-topbar'];
+    for (var i = 0; i < selectors.length; i++) {
+      var el = document.querySelector(selectors[i]);
+      if (el) return el;
+    }
+    // last-resort: any fixed/sticky element at top
+    var all = document.querySelectorAll('body *');
+    for (var j = 0; j < all.length; j++) {
+      var computed = window.getComputedStyle(all[j]);
+      if ((computed.position === 'fixed' || computed.position === 'sticky') && Math.round(all[j].getBoundingClientRect().top) === 0) {
+        return all[j];
+      }
+    }
+    return null;
+  }
 
+  function updateHeaderHeightVar() {
+    var header = findHeaderElement();
+    var headerHeight = 0;
+    if (header) {
+      headerHeight = Math.ceil(header.getBoundingClientRect().height);
+    }
+    if (!headerHeight) headerHeight = 56; // fallback
+    document.documentElement.style.setProperty('--header-height', headerHeight + 'px');
+  }
+
+  window.addEventListener('load', updateHeaderHeightVar);
+  window.addEventListener('resize', updateHeaderHeightVar);
+  updateHeaderHeightVar(); // initial
+
+  /* ----- target wrapper detection (we'll push this element, not body) ----- */
+  function findPageWrapper() {
+    var candidates = ['#wrapper', '.content', '#content', '.main', '.app-content', '#app', '.layout-content'];
+    for (var i = 0; i < candidates.length; i++) {
+      var el = document.querySelector(candidates[i]);
+      if (el) return el;
+    }
+    // fallback: first element that contains most of the page (body as last resort)
+    return document.querySelector('body') || document.documentElement;
+  }
+
+  var pageWrapper = findPageWrapper();
+
+  /* ----- open / close that modify the wrapper class instead of body ----- */
   function openSidebar() {
+    if (!sidebar) return;
     sidebar.classList.add('open');
-    toggle.setAttribute('aria-expanded', 'true');
+    toggle && toggle.setAttribute('aria-expanded', 'true');
     sidebar.setAttribute('aria-hidden', 'false');
-    // push page content (use body or a specific content wrapper if needed)
-    document.body.classList.add('body-right-sidebar-active');
+    pageWrapper.classList.add('body-right-sidebar-active');
   }
   function closeSidebar() {
+    if (!sidebar) return;
     sidebar.classList.remove('open');
-    toggle.setAttribute('aria-expanded', 'false');
+    toggle && toggle.setAttribute('aria-expanded', 'false');
     sidebar.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('body-right-sidebar-active');
+    pageWrapper.classList.remove('body-right-sidebar-active');
   }
   function toggleSidebar(){
+    if (!sidebar) return;
     if (sidebar.classList.contains('open')) closeSidebar(); else openSidebar();
   }
 
-  // events
-  toggle.addEventListener('click', function(e){ e.preventDefault(); toggleSidebar(); });
-  closeBtn.addEventListener('click', function(e){ e.preventDefault(); closeSidebar(); });
+  /* ----- wire events (remove old listeners where possible for idempotence) ----- */
+  if (toggle) {
+    // remove any inline onclick to avoid duplication if needed
+    toggle.removeEventListener('click', toggleSidebar);
+    toggle.addEventListener('click', function(e){ e.preventDefault(); toggleSidebar(); });
+  }
+  if (closeBtn) {
+    closeBtn.removeEventListener('click', closeSidebar);
+    closeBtn.addEventListener('click', function(e){ e.preventDefault(); closeSidebar(); });
+  }
 
   // close on ESC
+  document.removeEventListener('keydown', closeSidebar);
   document.addEventListener('keydown', function(e){
-    if (e.key === 'Escape' && sidebar.classList.contains('open')) closeSidebar();
+    if (e.key === 'Escape' && sidebar && sidebar.classList.contains('open')) closeSidebar();
   });
 
-  // Optional: close when clicking outside panel (on overlay), only on small screens we may want this:
+  // outside click: close only on small screens (keeps desktop not closing accidentally)
+  document.removeEventListener('click', closeSidebar);
   document.addEventListener('click', function(e){
-    if (!sidebar.classList.contains('open')) return;
-    // if click is outside the panel and outside the toggle, close it
+    if (!sidebar || !sidebar.classList.contains('open')) return;
     if (!panel.contains(e.target) && !toggle.contains(e.target)) {
-      // on big screens we might not want to close automatically, so check width
       if (window.innerWidth <= 991) closeSidebar();
     }
   });
 
-  // optional: recompute CSS margin if sidebar width changes (if you allow resize)
+  // keep body margin recomputed if panel width changes (optional)
   function updateBodyMargin(){
-    var w = panel.getBoundingClientRect().width || SIDEBAR_WIDTH;
-    // set a CSS var or body class margin (we used CSS class with fixed width)
-    // If you prefer dynamic margin:
-    // document.body.style.marginRight = w + 'px';
+    var w = panel ? (panel.getBoundingClientRect().width) : 420;
+    document.documentElement.style.setProperty('--right-sidebar-open-width', (w || 420) + 'px');
+    // If you prefer dynamic margin on the element instead of class, set inline:
+    // pageWrapper.style.marginRight = (sidebar.classList.contains('open') ? w + 'px' : '');
   }
   window.addEventListener('resize', updateBodyMargin);
-  // initial call
   updateBodyMargin();
 
-  // Optionally open by default:
-  // openSidebar();
+  // expose functions to global for debugging (optional)
+  window._rightSidebarOpen = openSidebar;
+  window._rightSidebarClose = closeSidebar;
+  window._rightSidebarToggle = toggleSidebar;
 
 })();
 </script>
